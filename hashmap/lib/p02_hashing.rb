@@ -7,7 +7,7 @@ class Array
     hashed = 0
     i = 0
     self.each do |el|
-      hashed = hashed ^ (el * i)
+      hashed = hashed ^ (el.hash * i)
       i += 1
     end
 
