@@ -48,3 +48,40 @@ def palindrome_perm(string)
   return false if odd_counts.length > 1
   true
 end
+
+def one_away(string1, string2)
+  if string1.length == string2.length
+    difs = 0
+    string1.split("").each_with_index do |char, i|
+      difs += 1 if char != string2[i]
+    end
+    if difs <= 1
+      return true
+    else
+      return false
+    end
+  elsif (string1.length - string2.length) == 1
+    return checkInserts(string2, string1)
+  elsif (string1.length - string2.length) == -1
+    return checkInserts(string1, string2)
+  else
+    return false
+  end
+
+end
+
+def checkInserts(shorter, longer)
+  i = 0
+  j = 0
+  while i < shorter.length && j < longer.length
+    if shorter[i] != longer[j]
+      return false if i != j
+      j += 1
+    else
+      i += 1
+      j += 1
+    end
+  end
+
+  true
+end
