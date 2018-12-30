@@ -11,36 +11,31 @@ class HashMap
   end
 
   def include?(key)
-    bucket(key).include?(key)
+    @store[bucket(key)].include?(key)
   end
 
   def set(key, val)
-    linked_list = bucket(key)
-    if linked_list.include?(key)
-      linked_list.update(key, val)
+    if @store[bucket(key)].include?(key)
+      @store[bucket(key)].update(key, val)
     else
-      linked_list.append(key, val)
+      resize! if count == num_buckets
       @count += 1
-      resize! if count > num_buckets
+      @store[bucket(key)].append(key, val)
     end
-
   end
 
   def get(key)
-    bucket(key).get(key)
+    @store[bucket(key)].get(key)
   end
 
   def delete(key)
-    del = bucket(key).remove(key)
-    @count -= 1 if del
+    return unless @store[bucket(key)].include?(key)
+    @count -= 1
+    @store[bucket(key)].remove(key)
   end
 
   def each
-    @store.each do |linked_list|
-      linked_list.each do |link|
-        yield(link.key, link.val)
-      end
-    end
+    @store.each { |ll| ll.each { |node| yield(node.key, node.val) } }
   end
 
   # uncomment when you have Enumerable included
@@ -61,17 +56,17 @@ class HashMap
   end
 
   def resize!
-    old_store = @store
-    @store = Array.new(num_buckets * 2) { LinkedList.new }
-    @count = 0
-    old_store.each do |linked_list|
-      linked_list.each do |link|
-        set(link.key, link.val)
+    new_store = Array.new(num_buckets * 2) { LinkedList.new }
+    @store.each do |ll|
+      ll.each do |node|
+        new_store[node.key.hash % (num_buckets * 2)].append(node.key, node.val)
       end
     end
+    @store = new_store
   end
 
   def bucket(key)
-    @store[key.hash % num_buckets]
+    # optional but useful; return the bucket corresponding to `key`
+    key.hash % num_buckets
   end
 end

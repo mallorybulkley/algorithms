@@ -1,5 +1,4 @@
-require 'byebug'
-class Link
+class Node
   attr_accessor :key, :val, :next, :prev
 
   def initialize(key = nil, val = nil)
@@ -14,13 +13,9 @@ class Link
   end
 
   def remove
-    # optional but useful, connects previous link to next link
-    # and removes self from list.
-    self.prev.next = self.next if self.prev
-    self.next.prev = self.prev if self.next
-    self.next = nil
-    self.prev = nil
-    self
+    # connects previous node to next node & removes self from list
+    @next.prev = @prev
+    @prev.next = @next
   end
 end
 
@@ -28,14 +23,14 @@ class LinkedList
   include Enumerable
 
   def initialize
-    @head = Link.new
-    @tail = Link.new
+    @head = Node.new
+    @tail = Node.new
     @head.next = @tail
     @tail.prev = @head
   end
 
   def [](i)
-    each_with_index { |link, j| return link if i == j }
+    each_with_index { |node, j| return node if i == j }
     nil
   end
 
@@ -52,53 +47,57 @@ class LinkedList
   end
 
   def get(key)
-    each do |link|
-      return link.val if link.key == key
+    current_node = first
+    while current_node
+      return current_node.val if current_node.key == key
+      current_node = current_node.next
     end
     nil
   end
 
   def include?(key)
-    any? { |link| link.key == key }
+    current_node = first
+    while current_node
+      return true if current_node.key == key
+      current_node = current_node.next
+    end
+    false
   end
 
   def append(key, val)
-    new_link = Link.new(key, val)
-
-    @tail.prev.next = new_link
-    new_link.prev = @tail.prev
-    new_link.next = @tail
-    @tail.prev = new_link
+    new_node = Node.new(key, val)
+    new_node.prev = last
+    new_node.next = @tail
+    last.next = new_node
+    @tail.prev = new_node
   end
 
   def update(key, val)
-    each do |link|
-      if link.key == key
-        link.val = val
-        return link;
-      end
+    current_node = first
+    while current_node
+      return current_node.val = val if current_node.key == key
+      current_node = current_node.next
     end
   end
 
   def remove(key)
-    each do |link|
-      if link.key == key
-        link.remove
-        return link.val
-      end
+    current_node = first
+    while current_node
+      return current_node.remove if current_node.key == key
+      current_node = current_node.next
     end
   end
 
   def each
-    link = first
-    until link == @tail
-      yield link
-      link = link.next
+    current_node = first
+    while current_node.next
+      yield(current_node)
+      current_node = current_node.next
     end
   end
 
   # uncomment when you have `each` working and `Enumerable` included
   def to_s
-    inject([]) { |acc, link| acc << "[#{link.key}, #{link.val}]" }.join(", ")
+    inject([]) { |acc, node| acc << "[#{node.key}, #{node.val}]" }.join(", ")
   end
 end

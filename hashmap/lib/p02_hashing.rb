@@ -4,20 +4,21 @@ end
 
 class Array
   def hash
-    hashed = 0
-    i = 0
-    self.each do |el|
-      hashed = hashed ^ (el.hash * i)
-      i += 1
+    all_hash = 0
+    each_with_index do |el, i|
+      all_hash += (el * i).hash
     end
-
-    hashed.hash
+    all_hash.hash
   end
 end
 
 class String
   def hash
-    self.chars.map(&:ord).hash
+    all_hash = 0
+    each_char.with_index do |char, i|
+      all_hash += (char.ord * i).hash
+    end
+    all_hash.hash
   end
 end
 
@@ -25,6 +26,10 @@ class Hash
   # This returns 0 because rspec will break if it returns nil
   # Make sure to implement an actual Hash#hash method
   def hash
-    self.keys.sort.join(&:to_s).hash + self.values.sort.join(&:to_s).hash
+    all_hash = 0
+    each do |key, val|
+      all_hash += (key.to_s + val.to_s).hash
+    end
+    all_hash.hash
   end
 end
