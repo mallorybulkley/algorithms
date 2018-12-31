@@ -1,19 +1,20 @@
-require 'byebug'
 class BinaryMinHeap
+  attr_reader :store, :prc
+
   def initialize(&prc)
-    @store = []
+    @store = Array.new
     @prc = prc
   end
 
   def count
-    store.count
+    store.length
   end
 
   def extract
-    store[0], store[count - 1] = store[count - 1], store[0]
-    extracted = store.pop
-    BinaryMinHeap.heapify_down(store, 0, &prc)
-    extracted
+    @store[0], @store[count - 1] = @store[count - 1], @store[0]
+    val = @store.pop
+    BinaryMinHeap.heapify_down(@store, 0, count, &@prc)
+    val
   end
 
   def peek
@@ -21,17 +22,13 @@ class BinaryMinHeap
   end
 
   def push(val)
-    store.push(val)
-    BinaryMinHeap.heapify_up(store, count - 1, &prc)
+    @store.push(val)
+    BinaryMinHeap.heapify_up(@store, count - 1, count, &@prc)
   end
-
-  protected
-  attr_accessor :prc, :store
 
   public
   def self.child_indices(len, parent_index)
-    children = [2 * parent_index + 1, 2 * parent_index + 2]
-    children.select { |i| i < len }
+    [parent_index * 2 + 1, parent_index * 2 + 2].select { |i| i < len }
   end
 
   def self.parent_index(child_index)
@@ -41,42 +38,34 @@ class BinaryMinHeap
 
   def self.heapify_down(array, parent_idx, len = array.length, &prc)
     prc ||= Proc.new { |a, b| a <=> b }
-    parent = array[parent_idx]
-
-    left_child_idx, right_child_idx = child_indices(len, parent_idx)
-    children = []
-    children << array[left_child_idx] if left_child_idx
-    children << array[right_child_idx] if right_child_idx
-
-    if children.all? { |child| prc.call(parent, child) <= 0 }
-      return array
+    children_indices = child_indices(len, parent_idx)
+    while !children_indices.empty?
+      child_to_swap = nil
+      if children_indices.length == 1
+        child_to_swap = children_indices[0] 
+      else 
+        child_to_swap = prc.call(
+          array[children_indices[0]], 
+          array[children_indices[1]]
+          ) < 0 ? children_indices[0] : children_indices[1]
+      end
+      return array unless prc.call(array[child_to_swap], array[parent_idx]) < 0
+      array[child_to_swap], array[parent_idx] = array[parent_idx], array[child_to_swap]
+      parent_idx = child_to_swap
+      children_indices = child_indices(len, parent_idx)
     end
-
-    smaller_child_idx = nil
-    if children.length == 1
-      smaller_child_idx = left_child_idx
-    else
-      smaller_child_idx =
-        prc.call(children[0], children[1]) == -1 ? left_child_idx : right_child_idx
-    end
-
-    array[parent_idx], array[smaller_child_idx] = array[smaller_child_idx], parent
-    heapify_down(array, smaller_child_idx, len, &prc)
+    array
   end
 
   def self.heapify_up(array, child_idx, len = array.length, &prc)
-    return array if child_idx == 0
-
+    return array if len < 2
     prc ||= Proc.new { |a, b| a <=> b }
-    child = array[child_idx]
     parent_idx = parent_index(child_idx)
-    parent = array[parent_idx]
-
-    if prc.call(child, parent) < 0
-      array[parent_idx], array[child_idx] = array[child_idx], array[parent_idx]
-      heapify_up(array, parent_idx, len, &prc)
-    else
-      return array
+    while child_idx > 0 && prc.call(array[child_idx], array[parent_idx]) < 0
+      array[child_idx], array[parent_idx] = array[parent_idx], array[child_idx]
+      child_idx = parent_idx
+      parent_idx = parent_index(child_idx) if child_idx > 0
     end
+    array
   end
 end
